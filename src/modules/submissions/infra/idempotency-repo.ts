@@ -38,6 +38,15 @@ export async function storeResponse(
   );
 }
 
+export async function deleteOlderThan(hours: number): Promise<number> {
+  const result = await query(
+    `DELETE FROM idempotency_keys
+     WHERE created_at < now() - make_interval(hours => $1)`,
+    [hours],
+  );
+  return result.rowCount ?? 0;
+}
+
 export async function findByKey(key: string): Promise<StoredKey | undefined> {
   const result = await query<StoredKey>(
     `SELECT key, request_hash, response_status, response_body, submission_id

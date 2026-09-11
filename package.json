@@ -17,6 +17,7 @@
     "migrate": "tsx src/infrastructure/persistence/migrate.ts",
     "worker": "tsx src/modules/jobs/worker.ts",
     "reclaim-jobs": "tsx src/scripts/reclaim-jobs.ts",
+    "expire-keys": "tsx src/scripts/expire-keys.ts",
     "prepare": "husky"
   },
   "dependencies": {
