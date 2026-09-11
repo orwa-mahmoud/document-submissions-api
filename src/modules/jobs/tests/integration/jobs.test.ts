@@ -5,15 +5,15 @@ import {
   closeServer,
   listen,
   memoryCache,
+  memoryJobQueue,
   staffHeaders,
   truncateAll,
 } from "#common/testing/helpers.ts";
 import { createApp } from "#composition/app.ts";
 import { query } from "#infrastructure/persistence/executor.ts";
 import { closePool } from "#infrastructure/persistence/pool.ts";
-import { reclaimStaleJobs } from "../../application/reclaim-stale-jobs.ts";
 import { processScan } from "../../application/process-scan.ts";
-import * as jobRepo from "../../infra/job-repo.ts";
+import { drainOutbox } from "#scripts/drain-outbox.ts";
 
 before(async () => {
   assertTestDatabase();
@@ -41,10 +41,11 @@ async function createSubmission(baseUrl: string, key: string): Promise<string> {
   return json.id;
 }
 
-test("enqueue 202 with progress 0 then worker reaches done 100", async () => {
+test("enqueue 202 then follow progress by job id; history row on done", async () => {
   await truncateAll();
+  const queue = memoryJobQueue();
   const { server, baseUrl } = await listen(
-    createApp({ cache: memoryCache(), checkDb: async () => undefined }),
+    createApp({ cache: memoryCache(), checkDb: async () => undefined, queue }),
   );
   try {
     const id = await createSubmission(baseUrl, "job-1");
@@ -60,18 +61,71 @@ test("enqueue 202 with progress 0 then worker reaches done 100", async () => {
     };
     assert.equal(body.progress, 0);
     assert.equal(body.scan_status, "queued");
-    await processScan("w1");
+    assert.match(body.job_id, /^\d+$/);
+
+    const beforeDrain = (await (
+      await fetch(`${baseUrl}/jobs/${body.job_id}`, { headers: staffHeaders() })
+    ).json()) as { status: string; progress: number };
+    assert.equal(beforeDrain.status, "queued");
+    assert.equal(beforeDrain.progress, 0);
+
+    await drainOutbox(queue);
+    await processScan({
+      id: body.job_id,
+      updateProgress: (n) => queue.updateProgress(body.job_id, n),
+    });
+
     const job = (await (
       await fetch(`${baseUrl}/jobs/${body.job_id}`, { headers: staffHeaders() })
     ).json()) as { status: string; progress: number };
     assert.equal(job.status, "done");
     assert.equal(job.progress, 100);
-    const sub = (await (await fetch(`${baseUrl}/submissions/${id}`)).json()) as {
-      scan_status: string;
-      scan_progress: number;
-    };
-    assert.equal(sub.scan_status, "done");
-    assert.equal(sub.scan_progress, 100);
+
+    const history = await query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM submission_scans WHERE job_id = $1 AND result = 'done'`,
+      [body.job_id],
+    );
+    assert.equal(history.rows[0].n, "1");
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("second scan while one is open is 409; after done a new scan is 202", async () => {
+  await truncateAll();
+  const queue = memoryJobQueue();
+  const { server, baseUrl } = await listen(
+    createApp({ cache: memoryCache(), checkDb: async () => undefined, queue }),
+  );
+  try {
+    const id = await createSubmission(baseUrl, "job-again");
+    const first = await fetch(`${baseUrl}/submissions/${id}/scan`, {
+      method: "POST",
+      headers: staffHeaders(),
+    });
+    assert.equal(first.status, 202);
+    const firstBody = (await first.json()) as { job_id: string };
+    const again = await fetch(`${baseUrl}/submissions/${id}/scan`, {
+      method: "POST",
+      headers: staffHeaders(),
+    });
+    assert.equal(again.status, 409);
+    const conflict = (await again.json()) as { error: { details?: { job_id?: string } } };
+    assert.equal(conflict.error.details?.job_id, firstBody.job_id);
+
+    await drainOutbox(queue);
+    await processScan({
+      id: firstBody.job_id,
+      updateProgress: (n) => queue.updateProgress(firstBody.job_id, n),
+    });
+
+    const rescan = await fetch(`${baseUrl}/submissions/${id}/scan`, {
+      method: "POST",
+      headers: staffHeaders(),
+    });
+    assert.equal(rescan.status, 202);
+    const rescanBody = (await rescan.json()) as { job_id: string };
+    assert.notEqual(rescanBody.job_id, firstBody.job_id);
   } finally {
     await closeServer(server);
   }
@@ -79,64 +133,21 @@ test("enqueue 202 with progress 0 then worker reaches done 100", async () => {
 
 test("unknown job 404 and non-staff 403", async () => {
   const { server, baseUrl } = await listen(
-    createApp({ cache: memoryCache(), checkDb: async () => undefined }),
+    createApp({
+      cache: memoryCache(),
+      checkDb: async () => undefined,
+      queue: memoryJobQueue(),
+    }),
   );
   try {
-    const missing = await fetch(`${baseUrl}/jobs/00000000-0000-4000-8000-000000000000`, {
+    const missing = await fetch(`${baseUrl}/jobs/999999999`, {
       headers: staffHeaders(),
     });
     assert.equal(missing.status, 404);
-    const forbidden = await fetch(`${baseUrl}/jobs/00000000-0000-4000-8000-000000000000`, {
+    const forbidden = await fetch(`${baseUrl}/jobs/1`, {
       headers: { "X-User-Id": "x", "X-Role": "public" },
     });
     assert.equal(forbidden.status, 403);
-  } finally {
-    await closeServer(server);
-  }
-});
-
-test("stale heartbeat is reclaimed; old worker writes are ignored; reclaim twice is ok", async () => {
-  await truncateAll();
-  const { server, baseUrl } = await listen(
-    createApp({ cache: memoryCache(), checkDb: async () => undefined }),
-  );
-  try {
-    const id = await createSubmission(baseUrl, "job-reclaim");
-    const queued = await fetch(`${baseUrl}/submissions/${id}/scan`, {
-      method: "POST",
-      headers: staffHeaders(),
-    });
-    const body = (await queued.json()) as { job_id: string };
-    await query(
-      `UPDATE jobs SET status = 'processing', worker_id = 'old', heartbeat_at = now() - interval '2 hours', attempts = 0
-       WHERE id = $1`,
-      [body.job_id],
-    );
-    const first = await reclaimStaleJobs();
-    assert.ok(first.retried >= 1);
-    const job = await jobRepo.findJob(body.job_id);
-    assert.equal(job?.status, "pending");
-    assert.equal(job?.worker_id, null);
-    const ignored = await jobRepo.writeProgress(
-      {
-        id: body.job_id,
-        kind: "document_scan",
-        status: "processing",
-        attempts: 1,
-        last_error: null,
-        submission_id: id,
-        progress: 10,
-        worker_id: "old",
-        heartbeat_at: new Date(),
-      },
-      50,
-    );
-    assert.equal(ignored, false);
-    const second = await reclaimStaleJobs();
-    assert.equal(typeof second.retried, "number");
-    await processScan("new-worker");
-    const done = await jobRepo.findJob(body.job_id);
-    assert.equal(done?.status, "done");
   } finally {
     await closeServer(server);
   }

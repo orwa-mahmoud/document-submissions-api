@@ -11,12 +11,16 @@ async function start(): Promise<void> {
   const { startListener } = await import("#modules/notifications/index.ts");
   await startListener();
   const app = createApp();
+  const { mountBullBoard } = await import("#infrastructure/queue/board.ts");
+  mountBullBoard(app);
   app.listen(config.PORT, () => {
     console.log(`listening on ${config.PORT}`);
   });
 }
 
-start().catch((err: unknown) => {
+try {
+  await start();
+} catch (err: unknown) {
   console.error(err);
   process.exit(1);
-});
+}

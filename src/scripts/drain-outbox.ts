@@ -1,27 +1,42 @@
 /**
- * One-shot: take unpublished outbox rows and mark them published.
- * Exits when done.
- *
- * OpenSearch is optional (stretch). Real publish happens here.
- * I did not add OpenSearch, Kafka, or Rabbit, to not introduce new dependencies.
- *
- * Usually I will do one of:
- * 1. Preferred: push the row to BullMQ + Redis in this repo, then a Bull worker upserts OpenSearch
- *    (fail / retry / status UI).
- * 2. Write OpenSearch direct from this job (one consumer, no extra broker).
- * 3. Push to Kafka or Rabbit if the org already runs them.
+ * Publish unpublished outbox rows to the job queue (jobId = outbox id), then mark published.
+ * Redis down: leave the row unpublished.
+ * submission.upsert is the OpenSearch job; the index adapter is not wired yet.
  */
+import type { JobQueue } from "#core/ports.ts";
 import { query } from "#infrastructure/persistence/executor.ts";
 import { closePool } from "#infrastructure/persistence/pool.ts";
 
-export async function drainOutbox(): Promise<number> {
-  const result = await query(`UPDATE outbox SET published_at = now() WHERE published_at IS NULL`);
-  return result.rowCount ?? 0;
+type OutboxRow = {
+  id: string;
+  event_type: string;
+  payload: Record<string, unknown>;
+};
+
+export async function drainOutbox(queue: JobQueue): Promise<number> {
+  const pending = await query<OutboxRow>(
+    `SELECT id::text, event_type, payload FROM outbox WHERE published_at IS NULL ORDER BY id`,
+  );
+  let published = 0;
+  for (const row of pending.rows) {
+    try {
+      await queue.add(row.event_type, row.payload, { jobId: row.id });
+    } catch {
+      continue;
+    }
+    await query(`UPDATE outbox SET published_at = now() WHERE id = $1 AND published_at IS NULL`, [
+      row.id,
+    ]);
+    published += 1;
+  }
+  return published;
 }
 
 const invoked = process.argv[1]?.endsWith("drain-outbox.ts") === true;
 if (invoked) {
-  const published = await drainOutbox();
+  const { bullJobQueue, closeQueue } = await import("#infrastructure/queue/bull-queue.ts");
+  const published = await drainOutbox(bullJobQueue);
   console.log(JSON.stringify({ published }));
+  await closeQueue();
   await closePool();
 }

@@ -47,10 +47,10 @@ export async function searchSubmissions(input: {
   // Tiny datasets often skip the trigram index; EXPLAIN on larger data can use
   // submissions_title_trgm_idx / submissions_body_trgm_idx. No index hint.
   const result = await query<SearchRow>(
-    `SELECT id, title, category, body, reference_date, status,
+    String.raw`SELECT id, title, category, body, reference_date, status,
             scan_status, scan_progress, version, created_at, updated_at
      FROM submissions
-     WHERE (title ILIKE $1 ESCAPE '\\' OR body ILIKE $1 ESCAPE '\\')
+     WHERE (title ILIKE $1 ESCAPE '\' OR body ILIKE $1 ESCAPE '\')
      ${categorySql}
      ORDER BY created_at ASC, id ASC
      LIMIT $2 OFFSET $3`,

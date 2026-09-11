@@ -24,7 +24,7 @@ export async function migrate(): Promise<void> {
     const done = new Set(applied.rows.map((r) => r.id));
     const files = readdirSync(migrationsDir())
       .filter((f) => /^\d+_.*\.sql$/.test(f))
-      .sort();
+      .sort((a, b) => a.localeCompare(b));
     for (const file of files) {
       if (done.has(file)) {
         continue;
@@ -48,13 +48,12 @@ export async function migrate(): Promise<void> {
 
 const invokedDirectly = process.argv[1]?.endsWith("migrate.ts") === true;
 if (invokedDirectly) {
-  migrate()
-    .then(() => {
-      console.log("migrations applied");
-      process.exit(0);
-    })
-    .catch((err: unknown) => {
-      console.error(err);
-      process.exit(1);
-    });
+  try {
+    await migrate();
+    console.log("migrations applied");
+    process.exit(0);
+  } catch (err: unknown) {
+    console.error(err);
+    process.exit(1);
+  }
 }

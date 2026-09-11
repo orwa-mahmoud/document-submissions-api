@@ -1,11 +1,6 @@
 /**
  * One-shot: delete idempotency keys older than IDEMPOTENCY_KEY_TTL_HOURS.
- * Exits when done.
- *
- * I did not add a scheduler, to not introduce new dependencies (BullMQ).
- * Usually I will do one of:
- * 1. Preferred: BullMQ + Redis in this repo — repeatable job, fail / retry / status UI (Bull Board).
- * 2. OS cron / systemd timer / k8s CronJob calling `npm run expire-keys` (clock + logs).
+ * The worker also runs this as a Bull repeatable (EXPIRE_KEYS_EVERY_MS, default 12h).
  */
 import { loadConfig } from "#common/config.ts";
 import { closePool } from "#infrastructure/persistence/pool.ts";

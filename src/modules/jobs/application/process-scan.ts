@@ -1,19 +1,24 @@
-import * as jobRepo from "../infra/job-repo.ts";
+import * as scanRepo from "../infra/scan-repo.ts";
 
 const STEPS = [0, 40, 70, 100];
 
-export async function processScan(workerId: string): Promise<boolean> {
-  const job = await jobRepo.claimNext(workerId);
-  if (!job) {
-    return false;
+export async function processScan(job: {
+  id: string;
+  updateProgress(n: number): Promise<void>;
+}): Promise<void> {
+  const row = await scanRepo.findScanJob(job.id);
+  if (!row) {
+    throw new Error(`scan job ${job.id} not found`);
   }
-  for (const progress of STEPS) {
-    const owned = await jobRepo.writeProgress(job, progress);
-    if (!owned) {
-      return true;
+  try {
+    for (const progress of STEPS) {
+      await job.updateProgress(progress);
+      await new Promise((r) => setTimeout(r, 15));
     }
-    await new Promise((r) => setTimeout(r, 15));
+    await scanRepo.insertResult(job.id, row.submission_id, "done");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "scan failed";
+    await scanRepo.insertResult(job.id, row.submission_id, "failed", message);
+    throw err;
   }
-  await jobRepo.finish(job, "done");
-  return true;
 }

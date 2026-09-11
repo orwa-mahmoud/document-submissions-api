@@ -88,7 +88,7 @@ curl -s -D - -X POST http://127.0.0.1:3000/submissions/<id>/scan \
 3. One pooled connection for status + audit + `pg_notify`.
 4. Oldest-first pages (`created_at, id`) + escaped `ILIKE` + `pg_trgm`.
 5. SSE + `Last-Event-ID` replay from **audit** + `LISTEN`.
-6. Jobs + `SKIP LOCKED` + 202 + progress + lease in the DB.
+6. Scan writes outbox in the same TX. `drain-outbox` publishes to BullMQ (`jobId` = outbox id). Progress lives on the submission.
 7. Redis + `ETag` on GET by id only.
 
 Persistence is `pg` in `infrastructure/persistence` plus named methods on module repos. No ORM. Swapping the database means new adapters, not new use cases.
@@ -99,15 +99,7 @@ Assumptions: status machine as specified; reads are open; `X-Role` / `X-User-Id`
 
 OpenSearch is a copy of Postgres, not the truth. Same TX writes an outbox row — not a dual-write from the API.
 
-This repo adds `npm run drain-outbox`: it marks unpublished rows published. Real publish happens there.
-
-Usually I will do one of:
-
-1. Preferred: outbox → BullMQ + Redis in this repo → Bull worker upserts OpenSearch (fail / retry / status UI).
-2. This job writes OpenSearch direct.
-3. Outbox → Kafka or Rabbit if the org already runs them.
-
-I did not add OpenSearch, Kafka, or Rabbit, to not introduce new dependencies.
+`npm run drain-outbox` (and the worker repeat every minute) pushes each unpublished row to BullMQ, then sets `published_at`. Redis down: the row stays unpublished. The worker job `submission.upsert` is the OpenSearch write; the index adapter is not wired yet (noop). I did not add OpenSearch, Kafka, or Rabbit.
 
 ## Caching (stretch)
 
@@ -119,7 +111,4 @@ I do not cache SSE. If a cached payload can differ by role, the key includes rol
 
 ## Schedule for production setup
 
-This repo adds `npm run expire-keys`, `npm run reclaim-jobs`, and `npm run drain-outbox`. I did not add a scheduler, to not introduce new dependencies (BullMQ). Usually I will do one of:
-
-1. Preferred: BullMQ + Redis in this repo — repeatable job, fail / retry / status UI (Bull Board).
-2. OS cron / systemd timer / k8s CronJob calling the script (clock + logs). Example: reclaim every minute.
+The worker registers Bull repeatables: `drain-outbox` every minute, `expire-keys` every 12 hours (`DRAIN_OUTBOX_EVERY_MS`, `EXPIRE_KEYS_EVERY_MS`). Board is `http://localhost:3000/admin/queues` (HTTP Basic from `BULLBOARD_USER` / `BULLBOARD_PASSWORD`). `npm run expire-keys` and `npm run drain-outbox` remain one-shot CLIs.

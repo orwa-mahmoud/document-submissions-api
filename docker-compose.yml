@@ -31,7 +31,10 @@ services:
       REDIS_URL: redis://redis:6379
       MIGRATE_ON_START: "true"
       IDEMPOTENCY_KEY_TTL_HOURS: 48
-      JOB_LEASE_SECONDS: 30
+      BULLBOARD_USER: admin
+      BULLBOARD_PASSWORD: admin
+      DRAIN_OUTBOX_EVERY_MS: 60000
+      EXPIRE_KEYS_EVERY_MS: 43200000
     depends_on:
       db:
         condition: service_healthy
@@ -39,13 +42,14 @@ services:
         condition: service_healthy
   worker:
     build: .
-    command: ["npx", "tsx", "src/modules/jobs/worker.ts"]
+    command: ["npx", "tsx", "src/composition/worker.ts"]
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://document_submissions:document_submissions@db:5432/document_submissions
       DATABASE_URL_TEST: postgresql://document_submissions:document_submissions@db:5432/document_submissions_test
       REDIS_URL: redis://redis:6379
-      JOB_LEASE_SECONDS: 30
+      DRAIN_OUTBOX_EVERY_MS: 60000
+      EXPIRE_KEYS_EVERY_MS: 43200000
     depends_on:
       db:
         condition: service_healthy

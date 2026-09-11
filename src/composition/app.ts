@@ -1,14 +1,16 @@
 import express, { type Express } from "express";
 import { errorHandler } from "#common/http/error-handler.ts";
 import { requestId } from "#common/http/request-id.ts";
-import { noopNotifier, type Cache, type Notifier } from "#core/ports.ts";
+import { noopNotifier, type Cache, type JobQueue, type Notifier } from "#core/ports.ts";
 import { redisCache } from "#infrastructure/cache/redis.ts";
+import { bullJobQueue } from "#infrastructure/queue/bull-queue.ts";
 import { register } from "./register.ts";
 
 export type AppDeps = {
   checkDb?: () => Promise<void>;
   cache?: Cache;
   notifier?: Notifier;
+  queue?: JobQueue;
 };
 
 async function defaultCheckDb(): Promise<void> {
@@ -32,6 +34,7 @@ export function createApp(deps: AppDeps = {}): Express {
   register(app, {
     cache: deps.cache ?? redisCache,
     notifier: deps.notifier ?? noopNotifier,
+    queue: deps.queue ?? bullJobQueue,
   });
   app.use(errorHandler);
   return app;

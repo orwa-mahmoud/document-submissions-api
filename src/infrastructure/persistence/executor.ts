@@ -10,13 +10,18 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   return runner.query<T>(sql, params);
 }
 
+const BACKSLASH = String.raw`\\`[0];
+
 export function escapeIlike(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+  return value
+    .replaceAll(BACKSLASH, String.raw`\\`)
+    .replaceAll("%", String.raw`\%`)
+    .replaceAll("_", String.raw`\_`);
 }
 
 export async function truncateForTests(): Promise<void> {
   await query(`
-    TRUNCATE jobs, outbox, submission_status_audit, idempotency_keys, submissions
+    TRUNCATE submission_scans, outbox, submission_status_audit, idempotency_keys, submissions
     RESTART IDENTITY CASCADE
   `);
 }

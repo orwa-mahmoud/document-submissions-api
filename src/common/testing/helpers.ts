@@ -1,7 +1,7 @@
 import { createServer, type RequestListener, type Server } from "node:http";
 import type { Express } from "express";
 import { truncateForTests } from "#infrastructure/persistence/executor.ts";
-import type { Cache } from "#core/ports.ts";
+import type { Cache, JobQueue, JobState } from "#core/ports.ts";
 import { databaseNameFromUrl, loadConfig } from "../config.ts";
 
 export function assertTestDatabase(): string {
@@ -54,6 +54,27 @@ export function memoryCache(): Cache {
     },
     async del(id) {
       map.delete(id);
+    },
+  };
+}
+
+export function memoryJobQueue(): JobQueue & {
+  added: { name: string; jobId: string }[];
+  updateProgress(jobId: string, n: number): Promise<void>;
+} {
+  const jobs = new Map<string, JobState>();
+  const added: { name: string; jobId: string }[] = [];
+  return {
+    added,
+    async add(name, _payload, opts) {
+      added.push({ name, jobId: opts.jobId });
+      jobs.set(opts.jobId, { status: "queued", progress: 0 });
+    },
+    async get(jobId) {
+      return jobs.get(jobId);
+    },
+    async updateProgress(jobId, n) {
+      jobs.set(jobId, { status: n >= 100 ? "done" : "processing", progress: n });
     },
   };
 }

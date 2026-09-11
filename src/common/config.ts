@@ -18,9 +18,7 @@ function loadDotEnv(): void {
     }
     const key = line.slice(0, eq);
     const value = line.slice(eq + 1);
-    if (process.env[key] === undefined) {
-      process.env[key] = value;
-    }
+    process.env[key] ??= value;
   }
 }
 
@@ -33,11 +31,14 @@ const envSchema = z.object({
   DATABASE_URL_TEST: z.string().min(1),
   REDIS_URL: z.string().min(1),
   IDEMPOTENCY_KEY_TTL_HOURS: z.coerce.number().int().positive().default(48),
-  JOB_LEASE_SECONDS: z.coerce.number().int().positive().default(30),
   MIGRATE_ON_START: z
     .enum(["true", "false"])
     .default("true")
     .transform((v) => v === "true"),
+  BULLBOARD_USER: z.string().default(""),
+  BULLBOARD_PASSWORD: z.string().default(""),
+  DRAIN_OUTBOX_EVERY_MS: z.coerce.number().int().positive().default(60_000),
+  EXPIRE_KEYS_EVERY_MS: z.coerce.number().int().positive().default(43_200_000),
 });
 
 export type Config = z.infer<typeof envSchema>;

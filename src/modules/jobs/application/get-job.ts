@@ -1,23 +1,60 @@
 import { NotFoundError } from "#core/errors.ts";
-import * as jobRepo from "../infra/job-repo.ts";
+import type { JobQueue } from "#core/ports.ts";
+import * as scanRepo from "../infra/scan-repo.ts";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const OUTBOX_ID_RE = /^\d+$/;
 
-export async function getJob(id: string) {
-  if (!UUID_RE.test(id)) {
+export async function getJob(id: string, queue: JobQueue) {
+  if (!OUTBOX_ID_RE.test(id)) {
     throw new NotFoundError();
   }
-  const job = await jobRepo.findJob(id);
-  if (!job) {
+  const row = await scanRepo.findScanJob(id);
+  if (!row) {
     throw new NotFoundError();
+  }
+  if (row.published_at) {
+    const state = await queue.get(id);
+    if (state) {
+      return {
+        job_id: row.id,
+        submission_id: row.submission_id,
+        status: state.status,
+        progress: state.progress,
+        worker_id: null,
+        attempts: 0,
+        last_error: null,
+      };
+    }
+  }
+  if (row.result === "done") {
+    return {
+      job_id: row.id,
+      submission_id: row.submission_id,
+      status: "done" as const,
+      progress: 100,
+      worker_id: null,
+      attempts: 0,
+      last_error: null,
+    };
+  }
+  if (row.result === "failed") {
+    return {
+      job_id: row.id,
+      submission_id: row.submission_id,
+      status: "failed" as const,
+      progress: 0,
+      worker_id: null,
+      attempts: 0,
+      last_error: null,
+    };
   }
   return {
-    job_id: job.id,
-    submission_id: job.submission_id,
-    status: job.status,
-    progress: job.progress,
-    worker_id: job.worker_id,
-    attempts: job.attempts,
-    last_error: job.last_error,
+    job_id: row.id,
+    submission_id: row.submission_id,
+    status: "queued" as const,
+    progress: 0,
+    worker_id: null,
+    attempts: 0,
+    last_error: null,
   };
 }
