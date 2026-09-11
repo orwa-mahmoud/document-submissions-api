@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DEFAULT_LIMIT, DEFAULT_PAGE, MAX_LIMIT } from "../../../core/paging.ts";
+import { DEFAULT_LIMIT, DEFAULT_PAGE, MAX_LIMIT } from "#core/paging.ts";
 
 export const searchQuerySchema = z
   .object({

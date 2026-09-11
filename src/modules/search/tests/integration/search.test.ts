@@ -6,10 +6,10 @@ import {
   listen,
   memoryCache,
   truncateAll,
-} from "../../../../common/testing/helpers.ts";
-import { createApp } from "../../../../composition/app.ts";
-import { query } from "../../../../infrastructure/persistence/executor.ts";
-import { closePool } from "../../../../infrastructure/persistence/pool.ts";
+} from "#common/testing/helpers.ts";
+import { createApp } from "#composition/app.ts";
+import { query } from "#infrastructure/persistence/executor.ts";
+import { closePool } from "#infrastructure/persistence/pool.ts";
 
 before(async () => {
   assertTestDatabase();

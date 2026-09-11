@@ -7,9 +7,9 @@ import {
   memoryCache,
   staffHeaders,
   truncateAll,
-} from "../../../../common/testing/helpers.ts";
-import { createApp } from "../../../../composition/app.ts";
-import { closePool } from "../../../../infrastructure/persistence/pool.ts";
+} from "#common/testing/helpers.ts";
+import { createApp } from "#composition/app.ts";
+import { closePool } from "#infrastructure/persistence/pool.ts";
 import { startListener, stopListener } from "../../infra/pg-notifier.ts";
 
 before(async () => {

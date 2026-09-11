@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { requireStaff } from "../../../common/http/auth.ts";
-import type { Cache, Notifier } from "../../../core/ports.ts";
+import { requireStaff } from "#common/http/auth.ts";
+import type { Cache, Notifier } from "#core/ports.ts";
 import { changeStatus } from "../application/change-status.ts";
 import { createSubmission } from "../application/create-submission.ts";
 import { getSubmission } from "../application/get-submission.ts";

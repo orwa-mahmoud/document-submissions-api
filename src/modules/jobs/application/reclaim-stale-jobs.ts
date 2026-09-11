@@ -1,4 +1,4 @@
-import { loadConfig } from "../../../common/config.ts";
+import { loadConfig } from "#common/config.ts";
 import * as jobRepo from "../infra/job-repo.ts";
 
 export async function reclaimStaleJobs() {

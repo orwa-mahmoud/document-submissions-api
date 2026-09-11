@@ -1,4 +1,4 @@
-import { escapeIlike, query } from "../../../infrastructure/persistence/executor.ts";
+import { escapeIlike, query } from "#infrastructure/persistence/executor.ts";
 
 type SearchRow = {
   id: string;

@@ -6,9 +6,9 @@ import {
   listen,
   memoryCache,
   truncateAll,
-} from "../../../../common/testing/helpers.ts";
-import { createApp } from "../../../../composition/app.ts";
-import { closePool } from "../../../../infrastructure/persistence/pool.ts";
+} from "#common/testing/helpers.ts";
+import { createApp } from "#composition/app.ts";
+import { closePool } from "#infrastructure/persistence/pool.ts";
 
 const body = {
   title: "Get me",

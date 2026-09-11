@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
-import { assertTestDatabase, truncateAll } from "../../../../common/testing/helpers.ts";
-import { query } from "../../../../infrastructure/persistence/executor.ts";
-import { closePool } from "../../../../infrastructure/persistence/pool.ts";
-import { drainOutbox } from "../../../../scripts/drain-outbox.ts";
+import { assertTestDatabase, truncateAll } from "#common/testing/helpers.ts";
+import { query } from "#infrastructure/persistence/executor.ts";
+import { closePool } from "#infrastructure/persistence/pool.ts";
+import { drainOutbox } from "#scripts/drain-outbox.ts";
 
 before(async () => {
   assertTestDatabase();

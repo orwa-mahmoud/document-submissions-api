@@ -1,5 +1,5 @@
 import pg, { type Pool } from "pg";
-import { loadConfig } from "../../common/config.ts";
+import { loadConfig } from "#common/config.ts";
 
 const DATE_OID = 1082;
 

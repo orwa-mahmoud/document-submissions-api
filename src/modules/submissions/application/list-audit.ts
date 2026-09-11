@@ -1,4 +1,4 @@
-import { NotFoundError } from "../../../core/errors.ts";
+import { NotFoundError } from "#core/errors.ts";
 import { UUID_RE } from "../api/schemas.ts";
 import * as auditRepo from "../infra/audit-repo.ts";
 import * as submissionRepo from "../infra/submission-repo.ts";

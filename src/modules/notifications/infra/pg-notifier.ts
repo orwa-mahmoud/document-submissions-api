@@ -1,6 +1,6 @@
 import type { PoolClient } from "pg";
-import type { Notifier } from "../../../core/ports.ts";
-import { getPool } from "../../../infrastructure/persistence/pool.ts";
+import type { Notifier } from "#core/ports.ts";
+import { getPool } from "#infrastructure/persistence/pool.ts";
 
 export type StatusListener = (payload: string) => void;
 

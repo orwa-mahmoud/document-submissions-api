@@ -1,4 +1,4 @@
-import { query } from "../../../infrastructure/persistence/executor.ts";
+import { query } from "#infrastructure/persistence/executor.ts";
 
 export type StatusEvent = {
   id: string;

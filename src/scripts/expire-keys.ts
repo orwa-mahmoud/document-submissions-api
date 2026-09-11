@@ -7,9 +7,9 @@
  * 1. Preferred: BullMQ + Redis in this repo — repeatable job, fail / retry / status UI (Bull Board).
  * 2. OS cron / systemd timer / k8s CronJob calling `npm run expire-keys` (clock + logs).
  */
-import { loadConfig } from "../common/config.ts";
-import { closePool } from "../infrastructure/persistence/pool.ts";
-import { deleteOlderThan } from "../modules/submissions/infra/idempotency-repo.ts";
+import { loadConfig } from "#common/config.ts";
+import { closePool } from "#infrastructure/persistence/pool.ts";
+import { deleteOlderThan } from "#modules/submissions/infra/idempotency-repo.ts";
 
 export async function expireIdempotencyKeys(): Promise<number> {
   const { IDEMPOTENCY_KEY_TTL_HOURS } = loadConfig();

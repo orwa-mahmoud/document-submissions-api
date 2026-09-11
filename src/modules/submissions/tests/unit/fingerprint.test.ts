@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { fingerprint } from "../../../../core/idempotency/fingerprint.ts";
+import { fingerprint } from "#core/idempotency/fingerprint.ts";
 
 test("fingerprint is stable when JSON key order changes", () => {
   const a = fingerprint("POST", "/submissions", {

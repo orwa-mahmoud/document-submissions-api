@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireStaff } from "../../../common/http/auth.ts";
+import { requireStaff } from "#common/http/auth.ts";
 import { enqueueScan } from "../application/enqueue-scan.ts";
 import { getJob } from "../application/get-job.ts";
 

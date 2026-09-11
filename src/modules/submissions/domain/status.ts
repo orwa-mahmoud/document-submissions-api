@@ -1,4 +1,4 @@
-import { BadRequestError } from "../../../core/errors.ts";
+import { BadRequestError } from "#core/errors.ts";
 import type { SubmissionStatus } from "./types.ts";
 
 const allowed: Record<SubmissionStatus, readonly SubmissionStatus[]> = {

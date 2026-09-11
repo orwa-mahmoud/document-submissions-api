@@ -1,5 +1,5 @@
 import type { RequestHandler } from "express";
-import { ForbiddenError, UnauthorizedError } from "../../core/errors.ts";
+import { ForbiddenError, UnauthorizedError } from "#core/errors.ts";
 
 declare module "express-serve-static-core" {
   interface Request {

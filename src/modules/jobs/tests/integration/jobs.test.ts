@@ -7,10 +7,10 @@ import {
   memoryCache,
   staffHeaders,
   truncateAll,
-} from "../../../../common/testing/helpers.ts";
-import { createApp } from "../../../../composition/app.ts";
-import { query } from "../../../../infrastructure/persistence/executor.ts";
-import { closePool } from "../../../../infrastructure/persistence/pool.ts";
+} from "#common/testing/helpers.ts";
+import { createApp } from "#composition/app.ts";
+import { query } from "#infrastructure/persistence/executor.ts";
+import { closePool } from "#infrastructure/persistence/pool.ts";
 import { reclaimStaleJobs } from "../../application/reclaim-stale-jobs.ts";
 import { processScan } from "../../application/process-scan.ts";
 import * as jobRepo from "../../infra/job-repo.ts";

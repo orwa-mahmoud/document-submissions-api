@@ -1,7 +1,7 @@
 import { createServer, type RequestListener, type Server } from "node:http";
 import type { Express } from "express";
-import { truncateForTests } from "../../infrastructure/persistence/executor.ts";
-import type { Cache } from "../../core/ports.ts";
+import { truncateForTests } from "#infrastructure/persistence/executor.ts";
+import type { Cache } from "#core/ports.ts";
 import { databaseNameFromUrl, loadConfig } from "../config.ts";
 
 export function assertTestDatabase(): string {

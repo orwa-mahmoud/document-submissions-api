@@ -1,6 +1,6 @@
 import type { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
-import { AppError } from "../../core/errors.ts";
+import { AppError } from "#core/errors.ts";
 import { errorBody } from "./errors.ts";
 
 function isPgError(err: unknown): err is { code: string } {

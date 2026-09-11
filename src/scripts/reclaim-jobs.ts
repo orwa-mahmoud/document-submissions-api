@@ -10,8 +10,8 @@
  *
  * A live worker may call the same reclaim function so it does not wait for the scheduler.
  */
-import { reclaimStaleJobs } from "../modules/jobs/application/reclaim-stale-jobs.ts";
-import { closePool } from "../infrastructure/persistence/pool.ts";
+import { reclaimStaleJobs } from "#modules/jobs/application/reclaim-stale-jobs.ts";
+import { closePool } from "#infrastructure/persistence/pool.ts";
 
 const result = await reclaimStaleJobs();
 console.log(JSON.stringify(result));

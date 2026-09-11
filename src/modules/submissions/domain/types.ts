@@ -1,4 +1,4 @@
-import type { ScanStatus, SubmissionStatus } from "../../../core/types.ts";
+import type { ScanStatus, SubmissionStatus } from "#core/types.ts";
 
 export type { ScanStatus, SubmissionStatus };
 

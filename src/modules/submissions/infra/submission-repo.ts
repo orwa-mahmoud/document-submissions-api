@@ -1,6 +1,6 @@
 import type { PoolClient } from "pg";
-import { ConflictError, NotFoundError } from "../../../core/errors.ts";
-import { query } from "../../../infrastructure/persistence/executor.ts";
+import { ConflictError, NotFoundError } from "#core/errors.ts";
+import { query } from "#infrastructure/persistence/executor.ts";
 import type { Submission, SubmissionStatus } from "../domain/types.ts";
 
 export type SubmissionRow = {

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
-import { query } from "../../../infrastructure/persistence/executor.ts";
+import { query } from "#infrastructure/persistence/executor.ts";
 import type { JobRow } from "../domain/types.ts";
 
 export async function submissionExists(client: PoolClient, submissionId: string): Promise<boolean> {

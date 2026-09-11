@@ -1,6 +1,6 @@
 import { createClient, type RedisClientType } from "redis";
-import { loadConfig } from "../../common/config.ts";
-import type { Cache } from "../../core/ports.ts";
+import { loadConfig } from "#common/config.ts";
+import type { Cache } from "#core/ports.ts";
 
 const PREFIX = "submission:";
 

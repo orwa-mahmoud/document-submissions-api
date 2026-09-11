@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { Response } from "express";
-import { requireStaff } from "../../../common/http/auth.ts";
+import { requireStaff } from "#common/http/auth.ts";
 import { replayEvents } from "../application/replay-events.ts";
 import { subscribe } from "../infra/pg-notifier.ts";
 

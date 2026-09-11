@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import { query } from "../../../infrastructure/persistence/executor.ts";
+import { query } from "#infrastructure/persistence/executor.ts";
 
 export async function insertUnpublished(
   client: PoolClient,

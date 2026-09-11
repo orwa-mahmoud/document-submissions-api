@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { BadRequestError } from "../../../../core/errors.ts";
+import { BadRequestError } from "#core/errors.ts";
 import { assertTransition } from "../../domain/status.ts";
 
 test("legal transitions pass", () => {

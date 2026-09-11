@@ -1,8 +1,8 @@
 import express, { type Express } from "express";
-import { errorHandler } from "../common/http/error-handler.ts";
-import { requestId } from "../common/http/request-id.ts";
-import { noopNotifier, type Cache, type Notifier } from "../core/ports.ts";
-import { redisCache } from "../infrastructure/cache/redis.ts";
+import { errorHandler } from "#common/http/error-handler.ts";
+import { requestId } from "#common/http/request-id.ts";
+import { noopNotifier, type Cache, type Notifier } from "#core/ports.ts";
+import { redisCache } from "#infrastructure/cache/redis.ts";
 import { register } from "./register.ts";
 
 export type AppDeps = {
@@ -12,7 +12,7 @@ export type AppDeps = {
 };
 
 async function defaultCheckDb(): Promise<void> {
-  const { query } = await import("../infrastructure/persistence/executor.ts");
+  const { query } = await import("#infrastructure/persistence/executor.ts");
   await query("SELECT 1");
 }
 

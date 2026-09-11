@@ -6,6 +6,14 @@
   "engines": {
     "node": ">=20"
   },
+  "imports": {
+    "#core/*": "./src/core/*",
+    "#common/*": "./src/common/*",
+    "#modules/*": "./src/modules/*",
+    "#infrastructure/*": "./src/infrastructure/*",
+    "#composition/*": "./src/composition/*",
+    "#scripts/*": "./src/scripts/*"
+  },
   "scripts": {
     "dev": "tsx src/composition/main.ts",
     "start": "tsx src/composition/main.ts",
