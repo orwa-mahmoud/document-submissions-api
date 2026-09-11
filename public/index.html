@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Document Submissions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #e4efe8;
+        --ink: #1c2420;
+        --muted: #4a5a52;
+        --rule: #8a9a8c;
+        --stamp: #0d4f3c;
+        --stamp-ink: #f3faf6;
+        --bad: #8f1d1d;
+        --focus: #0d4f3c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+        font-size: 1.05rem;
+        line-height: 1.55;
+      }
+
+      a {
+        color: var(--stamp);
+        cursor: pointer;
+      }
+
+      a:focus-visible,
+      button:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 3px;
+      }
+
+      .skip {
+        position: absolute;
+        left: 0.75rem;
+        top: 0.75rem;
+        transform: translateY(-200%);
+        background: var(--ink);
+        color: var(--paper);
+        padding: 0.4rem 0.7rem;
+      }
+
+      .skip:focus {
+        transform: none;
+      }
+
+      main {
+        width: min(40rem, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 3rem 0 4rem;
+      }
+
+      header {
+        border-bottom: 2px solid var(--ink);
+        padding-bottom: 1.25rem;
+      }
+
+      h1 {
+        margin: 0 0 0.35rem;
+        font-size: clamp(1.8rem, 4vw, 2.4rem);
+        font-weight: 700;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+      }
+
+      .lede {
+        margin: 0;
+        color: var(--muted);
+        max-width: 34rem;
+      }
+
+      .status {
+        margin: 1.25rem 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.65rem 1rem;
+      }
+
+      .dot {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-height: 2.75rem;
+      }
+
+      .dot i {
+        width: 0.7rem;
+        height: 0.7rem;
+        border-radius: 50%;
+        background: var(--rule);
+      }
+
+      .dot[data-state="ok"] i {
+        background: var(--stamp);
+      }
+
+      .dot[data-state="down"] i {
+        background: var(--bad);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .actions a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.75rem;
+        padding: 0.45rem 0.9rem;
+        text-decoration: none;
+        border: 1.5px solid var(--stamp);
+        color: var(--stamp);
+        background: transparent;
+      }
+
+      .actions a.primary {
+        background: var(--stamp);
+        color: var(--stamp-ink);
+      }
+
+      .actions a:hover {
+        filter: brightness(1.08);
+      }
+
+      h2 {
+        margin: 2.25rem 0 0.75rem;
+        font-size: 1.15rem;
+      }
+
+      dl {
+        margin: 0;
+        border-top: 1px solid var(--rule);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 5.5rem 1fr;
+        gap: 0.75rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--rule);
+        align-items: baseline;
+      }
+
+      dt {
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+
+      dd {
+        margin: 0;
+      }
+
+      code {
+        font-family: ui-monospace, "IBM Plex Mono", Menlo, monospace;
+        font-size: 0.92em;
+      }
+
+      pre {
+        margin: 0;
+        padding: 1rem 1.1rem;
+        background: #1c2420;
+        color: #e4efe8;
+        overflow-x: auto;
+        font-size: 0.88rem;
+        line-height: 1.45;
+      }
+
+      footer {
+        margin-top: 2.5rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#routes">Skip to routes</a>
+    <main>
+      <header>
+        <h1>Document Submissions</h1>
+        <p class="lede">
+          REST API for intake, status, search, and background scan. Postgres is the source of truth.
+        </p>
+        <div class="status">
+          <span class="dot" id="health" data-state="wait"><i></i><span>Checking health</span></span>
+          <nav class="actions" aria-label="Quick links">
+            <a class="primary" href="/admin/queues">Job board</a>
+            <a href="/health">Health JSON</a>
+          </nav>
+        </div>
+      </header>
+
+      <h2 id="routes">Routes</h2>
+      <dl>
+        <div class="row">
+          <dt>POST</dt>
+          <dd><code>/submissions</code> — create, send <code>Idempotency-Key</code></dd>
+        </div>
+        <div class="row">
+          <dt>GET</dt>
+          <dd><code>/submissions/:id</code> — <code>If-None-Match</code> for 304</dd>
+        </div>
+        <div class="row">
+          <dt>PATCH</dt>
+          <dd><code>/submissions/:id/status</code> — staff, <code>If-Match</code></dd>
+        </div>
+        <div class="row">
+          <dt>GET</dt>
+          <dd><code>/search?q=</code> — escaped ILIKE, oldest first</dd>
+        </div>
+        <div class="row">
+          <dt>GET</dt>
+          <dd><code>/events</code> — SSE status changes, staff</dd>
+        </div>
+        <div class="row">
+          <dt>POST</dt>
+          <dd><code>/submissions/:id/scan</code> — enqueue, follow <code>/jobs/:id</code></dd>
+        </div>
+      </dl>
+
+      <h2>Try a create</h2>
+      <pre><code>curl -s -D - -X POST http://127.0.0.1:3000/submissions \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: demo-1' \
+  -d '{"title":"Permit","category":"legal","body":"hello"}'</code></pre>
+
+      <footer>
+        Staff routes need <code>X-Role: staff</code> and <code>X-User-Id</code>. Board is HTTP
+        Basic.
+      </footer>
+    </main>
+    <script>
+      const el = document.getElementById("health");
+      const label = el.querySelector("span");
+      fetch("/health")
+        .then((r) => r.json())
+        .then((body) => {
+          const ok = body.status === "ok";
+          el.dataset.state = ok ? "ok" : "down";
+          label.textContent = ok ? "API reachable" : "API unavailable";
+        })
+        .catch(() => {
+          el.dataset.state = "down";
+          label.textContent = "API unavailable";
+        });
+    </script>
+  </body>
+</html>

@@ -2,25 +2,27 @@
 
 REST API for the document submissions: idempotent create, optimistic status changes, escaped search, SSE, and background scan jobs. Postgres is the truth. No ORM.
 
-## Reviewers: Docker
+## Setup
+
+Docker (`.env.example` is already `db` / `redis`):
 
 ```bash
+cp .env.example .env.docker
 docker compose up --build
 ```
 
-API on `http://localhost:3000`. Compose does **not** publish 5432 or 6379.
+API on `http://localhost:3000` (open `/` in a browser). Compose does not publish 5432 or 6379.
 
-## Local (nvm)
+Host (nvm) — point `DATABASE_URL` and `REDIS_URL` at your Postgres and Redis (`localhost` if they are already running):
 
 ```bash
-nvm use 24
-npm ci
-npm run migrate
+cp .env.example .env
+npm install
 npm test
 npm run dev
 ```
 
-Uses `.env` against shared Postgres (`localhost:5432`) and Redis (`localhost:6379`).
+Second terminal: `npm run worker`. Migrate runs on API start (`MIGRATE_ON_START=true`).
 
 ## Curl
 
@@ -88,7 +90,7 @@ curl -s -D - -X POST http://127.0.0.1:3000/submissions/<id>/scan \
 3. One pooled connection for status + audit + `pg_notify`.
 4. Oldest-first pages (`created_at, id`) + escaped `ILIKE` + `pg_trgm`.
 5. SSE + `Last-Event-ID` replay from **audit** + `LISTEN`.
-6. Scan writes outbox in the same TX. `drain-outbox` publishes to BullMQ (`jobId` = outbox id). Progress lives on the submission.
+6. Scan writes outbox in the same TX. `drain-outbox` publishes to BullMQ (`jobId` = `outbox-<id>`). The API job id is still the outbox id. Progress lives on the submission.
 7. Redis + `ETag` on GET by id only.
 
 Persistence is `pg` in `infrastructure/persistence` plus named methods on module repos. No ORM. Swapping the database means new adapters, not new use cases.

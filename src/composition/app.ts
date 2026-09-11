@@ -1,3 +1,5 @@
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import express, { type Express } from "express";
 import { errorHandler } from "#common/http/error-handler.ts";
 import { requestId } from "#common/http/request-id.ts";
@@ -18,11 +20,16 @@ async function defaultCheckDb(): Promise<void> {
   await query("SELECT 1");
 }
 
+const indexHtml = join(dirname(fileURLToPath(import.meta.url)), "../../public/index.html");
+
 export function createApp(deps: AppDeps = {}): Express {
   const checkDb = deps.checkDb ?? defaultCheckDb;
   const app = express();
   app.use(express.json());
   app.use(requestId);
+  app.get("/", (_req, res) => {
+    res.sendFile(indexHtml);
+  });
   app.get("/health", async (_req, res) => {
     try {
       await checkDb();

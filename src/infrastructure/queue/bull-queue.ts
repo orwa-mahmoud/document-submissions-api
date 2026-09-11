@@ -1,13 +1,26 @@
-import { Queue, Worker, type ConnectionOptions, type Job } from "bullmq";
+import { Queue, Worker, type Job } from "bullmq";
+import { Redis } from "ioredis";
 import { loadConfig } from "#common/config.ts";
 import type { JobQueue, JobState } from "#core/ports.ts";
 
 export const QUEUE_NAME = "document-submissions";
 
-let queue: Queue | undefined;
+const JOB_ID_PREFIX = "outbox-";
 
-export function redisConnection(): ConnectionOptions {
-  return { url: loadConfig().REDIS_URL, maxRetriesPerRequest: null };
+export function toBullJobId(outboxId: string): string {
+  return `${JOB_ID_PREFIX}${outboxId}`;
+}
+
+export function fromBullJobId(jobId: string): string {
+  return jobId.startsWith(JOB_ID_PREFIX) ? jobId.slice(JOB_ID_PREFIX.length) : jobId;
+}
+
+let queue: Queue | undefined;
+let connection: Redis | undefined;
+
+export function redisConnection(): Redis {
+  connection ??= new Redis(loadConfig().REDIS_URL, { maxRetriesPerRequest: null });
+  return connection;
 }
 
 export function getQueue(): Queue {
@@ -36,7 +49,7 @@ function toJobState(state: string, progress: unknown): JobState {
 export const bullJobQueue: JobQueue = {
   async add(name, payload, opts) {
     try {
-      await getQueue().add(name, payload, { jobId: opts.jobId });
+      await getQueue().add(name, payload, { jobId: toBullJobId(opts.jobId) });
     } catch (err) {
       if (!alreadyQueued(err)) {
         throw err;
@@ -44,7 +57,7 @@ export const bullJobQueue: JobQueue = {
     }
   },
   async get(jobId) {
-    const job = await getQueue().getJob(jobId);
+    const job = await getQueue().getJob(toBullJobId(jobId));
     if (!job) {
       return undefined;
     }
@@ -72,9 +85,12 @@ export async function registerRepeats(): Promise<void> {
 }
 
 export async function closeQueue(): Promise<void> {
-  if (!queue) {
-    return;
+  if (queue) {
+    await queue.close();
+    queue = undefined;
   }
-  await queue.close();
-  queue = undefined;
+  if (connection) {
+    await connection.quit();
+    connection = undefined;
+  }
 }

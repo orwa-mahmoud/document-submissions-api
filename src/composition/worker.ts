@@ -3,6 +3,7 @@ import { noopSearchIndex } from "#core/ports.ts";
 import {
   bullJobQueue,
   createQueueWorker,
+  fromBullJobId,
   registerRepeats,
 } from "#infrastructure/queue/bull-queue.ts";
 import { handleUpsert } from "#modules/jobs/application/handle-upsert.ts";
@@ -32,7 +33,7 @@ async function handle(job: Job): Promise<unknown> {
         throw new Error("scan job missing id");
       }
       return processScan({
-        id: jobId,
+        id: fromBullJobId(jobId),
         updateProgress: (n) => job.updateProgress(n),
       });
     }
