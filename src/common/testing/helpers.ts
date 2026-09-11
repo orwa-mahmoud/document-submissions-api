@@ -1,6 +1,8 @@
-import { createServer, type Server } from "node:http";
-import { databaseNameFromUrl, loadConfig } from "../config.ts";
+import { createServer, type RequestListener, type Server } from "node:http";
+import type { Express } from "express";
 import { truncateForTests } from "../../infrastructure/persistence/executor.ts";
+import type { Cache } from "../../core/ports.ts";
+import { databaseNameFromUrl, loadConfig } from "../config.ts";
 
 export function assertTestDatabase(): string {
   const { DATABASE_URL_TEST } = loadConfig();
@@ -18,10 +20,8 @@ export function staffHeaders(userId = "test-staff"): Record<string, string> {
   };
 }
 
-export async function listen(
-  app: Parameters<typeof createServer>[0],
-): Promise<{ server: Server; baseUrl: string }> {
-  const server = createServer(app);
+export async function listen(app: Express): Promise<{ server: Server; baseUrl: string }> {
+  const server = createServer(app as RequestListener);
   await new Promise<void>((resolve) => {
     server.listen(0, "127.0.0.1", resolve);
   });
@@ -41,4 +41,19 @@ export async function closeServer(server: Server): Promise<void> {
 export async function truncateAll(): Promise<void> {
   assertTestDatabase();
   await truncateForTests();
+}
+
+export function memoryCache(): Cache {
+  const map = new Map<string, string>();
+  return {
+    async get(id) {
+      return map.get(id) ?? null;
+    },
+    async set(id, value) {
+      map.set(id, value);
+    },
+    async del(id) {
+      map.delete(id);
+    },
+  };
 }
