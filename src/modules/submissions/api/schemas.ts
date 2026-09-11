@@ -14,4 +14,10 @@ export const createSubmissionSchema = z
 
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;
 
+export const changeStatusSchema = z
+  .object({
+    status: z.enum(["pending", "under_review", "approved", "rejected"]),
+  })
+  .strict();
+
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

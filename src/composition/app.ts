@@ -1,13 +1,14 @@
 import express, { type Express } from "express";
 import { errorHandler } from "../common/http/error-handler.ts";
 import { requestId } from "../common/http/request-id.ts";
-import type { Cache } from "../core/ports.ts";
+import { noopNotifier, type Cache, type Notifier } from "../core/ports.ts";
 import { redisCache } from "../infrastructure/cache/redis.ts";
 import { register } from "./register.ts";
 
 export type AppDeps = {
   checkDb?: () => Promise<void>;
   cache?: Cache;
+  notifier?: Notifier;
 };
 
 async function defaultCheckDb(): Promise<void> {
@@ -28,7 +29,10 @@ export function createApp(deps: AppDeps = {}): Express {
       res.status(503).json({ status: "unavailable" });
     }
   });
-  register(app, { cache: deps.cache ?? redisCache });
+  register(app, {
+    cache: deps.cache ?? redisCache,
+    notifier: deps.notifier ?? noopNotifier,
+  });
   app.use(errorHandler);
   return app;
 }

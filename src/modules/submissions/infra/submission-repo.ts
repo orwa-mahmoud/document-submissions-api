@@ -1,6 +1,7 @@
 import type { PoolClient } from "pg";
+import { ConflictError, NotFoundError } from "../../../core/errors.ts";
 import { query } from "../../../infrastructure/persistence/executor.ts";
-import type { Submission } from "../domain/types.ts";
+import type { Submission, SubmissionStatus } from "../domain/types.ts";
 
 export type SubmissionRow = {
   id: string;
@@ -64,4 +65,59 @@ export async function findById(
     client,
   );
   return result.rows[0];
+}
+
+export async function lockForUpdate(client: PoolClient, id: string): Promise<SubmissionRow> {
+  const locked = await query<SubmissionRow>(
+    `SELECT id, title, category, body, reference_date, status,
+            scan_status, scan_progress, version, created_at, updated_at
+     FROM submissions WHERE id = $1 FOR UPDATE`,
+    [id],
+    client,
+  );
+  if (!locked.rows[0]) {
+    throw new NotFoundError();
+  }
+  return locked.rows[0];
+}
+
+export async function saveWithExpectedVersion(
+  client: PoolClient,
+  id: string,
+  expectedVersion: number,
+  status: SubmissionStatus,
+): Promise<SubmissionRow> {
+  const locked = await query<SubmissionRow>(
+    `SELECT id, title, category, body, reference_date, status,
+            scan_status, scan_progress, version, created_at, updated_at
+     FROM submissions WHERE id = $1 FOR UPDATE`,
+    [id],
+    client,
+  );
+  const current = locked.rows[0];
+  if (!current) {
+    throw new NotFoundError();
+  }
+  if (current.version !== expectedVersion) {
+    throw new ConflictError("stale_version", "Submission version is stale", {
+      current_version: current.version,
+      current_status: current.status,
+    });
+  }
+  const updated = await query<SubmissionRow>(
+    `UPDATE submissions
+     SET status = $3, version = version + 1, updated_at = now()
+     WHERE id = $1 AND version = $2
+     RETURNING id, title, category, body, reference_date, status,
+               scan_status, scan_progress, version, created_at, updated_at`,
+    [id, expectedVersion, status],
+    client,
+  );
+  if (!updated.rows[0]) {
+    throw new ConflictError("stale_version", "Submission version is stale", {
+      current_version: current.version,
+      current_status: current.status,
+    });
+  }
+  return updated.rows[0];
 }

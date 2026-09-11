@@ -17,3 +17,9 @@ export const systemClock: Clock = {
     return new Date();
   },
 };
+
+export const noopNotifier: Notifier = {
+  async notify() {
+    /* in-memory fan-out is wired in composition when SSE lands */
+  },
+};
