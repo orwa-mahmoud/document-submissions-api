@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: document_submissions
+      POSTGRES_PASSWORD: document_submissions
+      POSTGRES_DB: document_submissions
+    # Do not publish 5432 — owner's localdev-services already uses it.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U document_submissions"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    # Do not publish 6379 — owner's localdev-services already uses it.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
