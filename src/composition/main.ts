@@ -8,6 +8,8 @@ async function start(): Promise<void> {
     const { migrate } = await import("../infrastructure/persistence/migrate.ts");
     await migrate();
   }
+  const { startListener } = await import("../modules/notifications/index.ts");
+  await startListener();
   const app = createApp();
   app.listen(config.PORT, () => {
     console.log(`listening on ${config.PORT}`);
