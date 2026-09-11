@@ -19,3 +19,35 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://document_submissions:document_submissions@db:5432/document_submissions
+      DATABASE_URL_TEST: postgresql://document_submissions:document_submissions@db:5432/document_submissions_test
+      REDIS_URL: redis://redis:6379
+      MIGRATE_ON_START: "true"
+      IDEMPOTENCY_KEY_TTL_HOURS: 48
+      JOB_LEASE_SECONDS: 30
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  worker:
+    build: .
+    command: ["npx", "tsx", "src/modules/jobs/worker.ts"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://document_submissions:document_submissions@db:5432/document_submissions
+      DATABASE_URL_TEST: postgresql://document_submissions:document_submissions@db:5432/document_submissions_test
+      REDIS_URL: redis://redis:6379
+      JOB_LEASE_SECONDS: 30
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

@@ -18,6 +18,7 @@
     "worker": "tsx src/modules/jobs/worker.ts",
     "reclaim-jobs": "tsx src/scripts/reclaim-jobs.ts",
     "expire-keys": "tsx src/scripts/expire-keys.ts",
+    "drain-outbox": "tsx src/scripts/drain-outbox.ts",
     "prepare": "husky"
   },
   "dependencies": {
