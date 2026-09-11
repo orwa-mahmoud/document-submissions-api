@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "tsx src/composition/main.ts",
     "start": "tsx src/composition/main.ts",
-    "test": "node --test --test-concurrency=1 --import tsx \"src/**/*.test.ts\"",
+    "test": "NODE_ENV=test node --test --test-concurrency=1 --import tsx \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",

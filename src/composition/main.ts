@@ -1,8 +1,20 @@
+import { loadConfig } from "../common/config.ts";
 import { createApp } from "./app.ts";
 
-const port = Number(process.env.PORT ?? 3000);
-const app = createApp();
+const config = loadConfig();
 
-app.listen(port, () => {
-  console.log(`listening on ${port}`);
+async function start(): Promise<void> {
+  if (config.MIGRATE_ON_START) {
+    const { migrate } = await import("../infrastructure/persistence/migrate.ts");
+    await migrate();
+  }
+  const app = createApp();
+  app.listen(config.PORT, () => {
+    console.log(`listening on ${config.PORT}`);
+  });
+}
+
+start().catch((err: unknown) => {
+  console.error(err);
+  process.exit(1);
 });

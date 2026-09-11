@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { createApp } from "./app.ts";
 
 test("GET /health returns ok", async () => {
-  const app = createApp();
+  const app = createApp({ checkDb: async () => undefined });
   const server = createServer(app);
   await new Promise<void>((resolve) => {
     server.listen(0, resolve);
